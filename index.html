@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>iPhone Texas Hold'em</title>
+    <title>iPhone Texas Hold'em Avançado</title>
     <style>
         :root {
             --casino-green: #1a5e3a;
@@ -56,18 +56,18 @@
             font-size: 1.1rem;
             color: #fff;
             font-weight: bold;
-            background: rgba(230, 126, 34, 0.3);
+            background: rgba(230, 126, 34, 0.4);
             padding: 6px 12px;
             border-radius: 20px;
         }
 
         .status-message {
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: #fff;
             margin: 10px 0;
-            min-height: 2.5rem;
+            min-height: 2.8rem;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
         }
 
@@ -96,17 +96,17 @@
         .cards-container {
             display: flex;
             justify-content: center;
-            min-height: 95px;
+            min-height: 92px;
             width: 100%;
-            gap: 4px;
+            gap: 5px;
         }
 
-        /* Cartas de Poker de tamanho mobile */
+        /* Cartas de Poker Mobile */
         .card {
             background: var(--card-white);
             color: black;
-            width: 62px;
-            height: 92px;
+            width: 60px;
+            height: 90px;
             border-radius: 6px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.3);
             display: flex;
@@ -126,7 +126,7 @@
         }
 
         .card-suit-center {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             align-self: center;
             line-height: 1;
         }
@@ -137,22 +137,57 @@
         }
 
         @keyframes dealCard {
-            from { transform: translateY(-30px); opacity: 0; }
+            from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* Controles */
+        /* Controles Dinâmicos */
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
         }
 
         .btn-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
+        }
+
+        /* Slider de Aposta Customizado para Dedão */
+        .raise-slider-container {
+            display: none;
+            flex-direction: column;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 12px;
+            gap: 5px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--gold);
+            cursor: pointer;
         }
 
         button {
@@ -160,8 +195,8 @@
             background: white;
             color: black;
             border: none;
-            padding: 15px;
-            font-size: 1rem;
+            padding: 14px;
+            font-size: 0.95rem;
             font-weight: bold;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -171,10 +206,10 @@
         button:active { transform: scale(0.96); }
         
         #btn-fold { background-color: #e74c3c; color: white; }
-        #btn-check { background-color: #34495e; color: white; }
         #btn-call { background-color: #2980b9; color: white; }
         #btn-raise { background-color: #2ecc71; color: white; }
-        #btn-start { background-color: var(--gold); color: #114227; }
+        #btn-confirm-raise { background-color: var(--gold); color: #114227; }
+        #btn-start { background-color: var(--gold); color: #114227; padding: 16px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -184,35 +219,49 @@
         <div class="pot-display">Pote: <span id="pot-total">0</span></div>
     </div>
 
-    <div id="status" class="status-message">Clique em Iniciar Jogo</div>
+    <div id="status" class="status-message">Clique em Iniciar para jogar Texas Hold'em</div>
 
     <div class="game-container">
         <!-- Bot -->
         <div class="hand-section">
-            <div class="label">Oponente (Bot): <span id="bot-status">Aguardando</span></div>
+            <div class="label">Bot (Fichas: <span id="bot-chips">1000</span>) | Status: <span id="bot-status" style="color:var(--gold);">Aguardando</span></div>
             <div id="bot-cards" class="cards-container"></div>
         </div>
 
-        <!-- Mesa (Community Cards) -->
-        <div class="hand-section" style="background: rgba(0,0,0,0.15); padding: 10px 0; border-radius: 10px;">
+        <!-- Mesa -->
+        <div class="hand-section" style="background: rgba(0,0,0,0.15); padding: 8px 0; border-radius: 10px;">
             <div class="label">Mesa (Comunidade)</div>
             <div id="community-cards" class="cards-container"></div>
         </div>
 
         <!-- Jogador -->
         <div class="hand-section">
-            <div class="label">Suas Cartas</div>
+            <div class="label">Suas Cartas (Apostado nesta rodada: <span id="player-invested">0</span>)</div>
             <div id="player-cards" class="cards-container"></div>
         </div>
     </div>
 
     <div class="controls">
-        <!-- Rodadas de Aposta -->
+        <!-- Controle Deslizante de Aumento -->
+        <div class="raise-slider-container" id="slider-panel">
+            <div class="slider-header">
+                <span>Valor do Aumento:</span>
+                <span id="slider-value">50</span>
+            </div>
+            <input type="range" id="bet-slider" min="20" max="200" step="10" value="50" oninput="updateSliderLabel()">
+            <div class="btn-group" style="margin-top: 5px;">
+                <button id="btn-confirm-raise" onclick="confirmRaise()">Confirmar Aumento</button>
+                <button onclick="toggleRaiseSlider(false)" style="background:#666; color:white; flex:0.4;">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Botões Principais de Ação -->
         <div class="btn-group" id="action-buttons" style="display: none;">
             <button id="btn-fold" onclick="fold()">Correr (Fold)</button>
-            <button id="btn-check" onclick="checkOrCall()">Mesa / Pagar</button>
-            <button id="btn-raise" onclick="raise()">Aumentar (+50)</button>
+            <button id="btn-call" onclick="callOrCheck()">Mesa / Pagar</button>
+            <button id="btn-raise" onclick="toggleRaiseSlider(true)">Aumentar (Raise)</button>
         </div>
+        
         <button id="btn-start" onclick="startHand()">Iniciar Próxima Mão</button>
     </div>
 
@@ -221,32 +270,41 @@
         let playerHand = [];
         let botHand = [];
         let communityCards = [];
-        let chips = 1000;
+        
+        let playerChips = 1000;
+        let botChips = 1000;
         let pot = 0;
+        
         let currentStage = 0; // 0: Pre-flop, 1: Flop, 2: Turn, 3: River
-        let currentBetToCall = 0;
-        let playerInvested = 0;
-        let botInvested = 0;
+        let currentBet = 0;      // Aposta mais alta da rodada atual
+        let playerCurrentBet = 0;// Quanto o jogador colocou na rodada atual
+        let botCurrentBet = 0;   // Quanto o bot colocou na rodada atual
 
         const suits = ['♠', '♥', '♦', '♣'];
         const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         const valueMap = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
 
-        if(localStorage.getItem('poker_chips')) {
-            chips = parseInt(localStorage.getItem('poker_chips'));
-            document.getElementById('chips-total').innerText = chips;
+        if(localStorage.getItem('poker_player_chips')) {
+            playerChips = parseInt(localStorage.getItem('poker_player_chips'));
+            botChips = parseInt(localStorage.getItem('poker_poker_bot_chips')) || 1000;
+            updateUI();
         }
 
         function updateUI() {
-            document.getElementById('chips-total').innerText = chips;
+            document.getElementById('chips-total').innerText = playerChips;
+            document.getElementById('bot-chips').innerText = botChips;
             document.getElementById('pot-total').innerText = pot;
-            localStorage.setItem('poker_chips', chips);
+            document.getElementById('player-invested').innerText = playerCurrentBet;
+            
+            localStorage.setItem('poker_player_chips', playerChips);
+            localStorage.setItem('poker_poker_bot_chips', botChips);
         }
 
         function secretCodeMenu() {
             let code = prompt("Insira o código secreto:");
             if (code === "777") {
-                chips = 1000;
+                playerChips = 1000;
+                botChips = 1000;
                 pot = 0;
                 updateUI();
                 document.getElementById('status').innerText = "Fichas resetadas para 1000! 💰";
@@ -281,87 +339,185 @@
         }
 
         function startHand() {
-            if (chips < 20) {
-                document.getElementById('status').innerText = "Você não tem fichas suficientes para o Blind! Use o código secreto.";
+            if (playerChips < 20 || botChips < 20) {
+                alert("Alguém faliu! Clique no saldo para resetar com o código secreto.");
                 return;
             }
 
-            // Reset de variáveis
             deck = shuffle(buildDeck());
-            pot = 40; // Small Blind (10) e Big Blind (20) combinados simplificados
-            chips -= 20;
-            playerInvested = 20;
-            botInvested = 20;
-            currentStage = 0;
             communityCards = [];
+            currentStage = 0;
             
+            // Blinds automáticos básicos
+            playerChips -= 10;
+            botChips -= 20;
+            pot = 30;
+            
+            playerCurrentBet = 10;
+            botCurrentBet = 20;
+            currentBet = 20; // O preço para pagar é o Big Blind (20)
+
             playerHand = [deck.pop(), deck.pop()];
             botHand = [deck.pop(), deck.pop()];
 
             document.getElementById('btn-start').style.display = 'none';
             document.getElementById('action-buttons').style.display = 'flex';
-            document.getElementById('bot-status').innerText = "Apostou 20 (Blind)";
-            document.getElementById('status').innerText = "Pre-Flop: Suas cartas foram distribuídas.";
+            document.getElementById('bot-status').innerText = "Apostou 20 (BB)";
+            document.getElementById('status').innerText = "Pré-Flop. Você precisa pagar 10 fichas para igualar ou aumentar!";
+            
+            document.getElementById('btn-call').innerText = `Pagar (${currentBet - playerCurrentBet})`;
 
             renderBoard(true);
             updateUI();
         }
 
         function renderBoard(hideBot = true) {
-            // Player
             const pCtx = document.getElementById('player-cards'); pCtx.innerHTML = '';
             playerHand.forEach(c => pCtx.appendChild(createCardElement(c)));
             
-            // Bot
             const bCtx = document.getElementById('bot-cards'); bCtx.innerHTML = '';
             botHand.forEach(c => bCtx.appendChild(createCardElement(c, hideBot)));
 
-            // Mesa
             const mCtx = document.getElementById('community-cards'); mCtx.innerHTML = '';
             communityCards.forEach(c => mCtx.appendChild(createCardElement(c)));
         }
 
-        function checkOrCall() {
-            // Avança os estágios do jogo (Flop, Turn, River)
+        function toggleRaiseSlider(show) {
+            if(show) {
+                // Configura o slider de acordo com as fichas do jogador
+                const minRaise = currentBet + 20; 
+                if(playerChips < (minRaise - playerCurrentBet)) {
+                    alert("Você não tem fichas suficientes para aumentar!");
+                    return;
+                }
+                document.getElementById('bet-slider').min = minRaise;
+                document.getElementById('bet-slider').max = Math.min(playerChips + playerCurrentBet, botChips + botCurrentBet);
+                document.getElementById('bet-slider').value = minRaise;
+                updateSliderLabel();
+                
+                document.getElementById('action-buttons').style.display = 'none';
+                document.getElementById('slider-panel').style.display = 'flex';
+            } else {
+                document.getElementById('action-buttons').style.display = 'flex';
+                document.getElementById('slider-panel').style.display = 'none';
+            }
+        }
+
+        function updateSliderLabel() {
+            document.getElementById('slider-value').innerText = document.getElementById('bet-slider').value;
+        }
+
+        function confirmRaise() {
+            let raiseValue = parseInt(document.getElementById('bet-slider').value);
+            let callAmountNeeded = raiseValue - playerCurrentBet;
+
+            playerChips -= callAmountNeeded;
+            pot += callAmountNeeded;
+            playerCurrentBet = raiseValue;
+            currentBet = raiseValue;
+
+            toggleRaiseSlider(false);
+            updateUI();
+            
+            document.getElementById('status').innerText = `Você aumentou a aposta para ${raiseValue}!`;
+            
+            // Agora é a vez do Bot pensar se foge, paga ou aumenta
+            setTimeout(botTurn, 1000);
+        }
+
+        function callOrCheck() {
+            let callAmountNeeded = currentBet - playerCurrentBet;
+            
+            if (callAmountNeeded > 0) {
+                // Pagando a aposta
+                if (playerChips < callAmountNeeded) {
+                    alert("Você foi All-in!");
+                    callAmountNeeded = playerChips;
+                }
+                playerChips -= callAmountNeeded;
+                pot += callAmountNeeded;
+                playerCurrentBet += callAmountNeeded;
+                document.getElementById('status').innerText = "Você pagou a aposta.";
+            } else {
+                document.getElementById('status').innerText = "Você pediu Mesa (Check).";
+            }
+
+            updateUI();
+            setTimeout(botTurn, 800);
+        }
+
+        function fold() {
+            document.getElementById('status').innerText = "Você correu (Fold)! O Bot ganhou o pote. ❌";
+            botChips += pot;
+            endHand();
+        }
+
+        // --- INTELIGÊNCIA ARTIFICIAL DO BOT ---
+        function botTurn() {
+            let botScore = evaluateHandStrength(botHand, communityCards);
+            let callAmountNeeded = currentBet - botCurrentBet;
+
+            if (callAmountNeeded > 0) {
+                // Se o bot tem uma mão péssima e o jogador aumentou muito, o BOT CORRE (Fold)
+                if (botScore < 1.5 && callAmountNeeded > 40) {
+                    document.getElementById('bot-status').innerText = "Correu (Fold)";
+                    document.getElementById('status').innerText = "O Bot correu! Você ganhou o pote! 🎉";
+                    playerChips += pot;
+                    updateUI();
+                    setTimeout(endHand, 2000);
+                    return;
+                }
+                
+                // Se o bot tem uma mão razoável/boa, ele Paga (Call)
+                if (botChips >= callAmountNeeded) {
+                    botChips -= callAmountNeeded;
+                    pot += callAmountNeeded;
+                    botCurrentBet += callAmountNeeded;
+                    document.getElementById('bot-status').innerText = "Pagou";
+                } else {
+                    // All-in do bot
+                    pot += botChips;
+                    botCurrentBet += botChips;
+                    botChips = 0;
+                    document.getElementById('bot-status').innerText = "All-In";
+                }
+            } else {
+                // Se ninguém apostou, ele dá Mesa (Check)
+                document.getElementById('bot-status').innerText = "Mesa (Check)";
+            }
+
+            updateUI();
+            setTimeout(nextStage, 1000);
+        }
+
+        function nextStage() {
+            // Reseta as apostas da rodada atual para ir para o próximo estágio
+            playerCurrentBet = 0;
+            botCurrentBet = 0;
+            currentBet = 0;
+            
             currentStage++;
-            botActionSimulate();
 
             if (currentStage === 1) { // Flop
                 communityCards.push(deck.pop(), deck.pop(), deck.pop());
-                document.getElementById('status').innerText = "Flop distribuído! Faça sua jogada.";
+                document.getElementById('status').innerText = "Flop na mesa! O que vai fazer?";
             } else if (currentStage === 2) { // Turn
                 communityCards.push(deck.pop());
                 document.getElementById('status').innerText = "Turn na mesa!";
             } else if (currentStage === 3) { // River
                 communityCards.push(deck.pop());
-                document.getElementById('status').innerText = "River na mesa! Última rodada.";
+                document.getElementById('status').innerText = "River na mesa! Última chance de apostas.";
             } else if (currentStage === 4) {
                 showdown();
                 return;
             }
+
+            document.getElementById('btn-call').innerText = `Mesa (Check)`;
             renderBoard(true);
-        }
-
-        function raise() {
-            if (chips < 50) { alert("Sem fichas suficientes!"); return; }
-            chips -= 50;
-            pot += 100; // Você bota 50 e o bot paga 50 (simplificado para fluidez mobile)
-            document.getElementById('status').innerText = "Você aumentou 50! O bot pagou.";
             updateUI();
-            checkOrCall();
         }
 
-        function fold() {
-            document.getElementById('status').innerText = "Você correu! O Bot levou o pote. ❌";
-            endHand(false);
-        }
-
-        function botActionSimulate() {
-            const actions = ["Mesa", "Paga", "Passa"];
-            document.getElementById('bot-status').innerText = actions[Math.floor(Math.random() * actions.length)];
-        }
-
-        // Sistema simplificado de força de mão para o Showdown (Desempate)
+        // Sistema de avaliação de mãos
         function evaluateHandStrength(hand, community) {
             let allCards = [...hand, ...community];
             let counts = {};
@@ -370,41 +526,45 @@
             let maxCount = Math.max(...Object.values(counts));
             let score = 0;
 
-            // Pontuação Simples: Maior par/trinca ganha
-            if (maxCount === 4) score = 7; // Quadra
-            else if (maxCount === 3) score = 4; // Trinca
+            if (maxCount === 4) score = 7; 
+            else if (maxCount === 3) score = 4; 
             else if (maxCount === 2) {
                 let pairs = Object.values(counts).filter(x => x === 2).length;
-                score = pairs >= 2 ? 3 : 2; // Dois Pares ou Um par
+                score = pairs >= 2 ? 3 : 2; 
             } else {
-                // Carta mais alta
                 let valuesInt = allCards.map(c => valueMap[c.value]);
-                score = Math.max(...valuesInt) / 100; 
+                score = Math.max(...valuesInt) / 15; 
             }
             return score;
         }
 
         function showdown() {
-            renderBoard(false); // Revela cartas do bot
+            renderBoard(false); // Revela cartas escondidas do bot
             let pScore = evaluateHandStrength(playerHand, communityCards);
             let bScore = evaluateHandStrength(botHand, communityCards);
 
             if (pScore > bScore) {
-                document.getElementById('status').innerText = "Você ganhou o Pote! 🏆";
-                chips += pot;
+                document.getElementById('status').innerText = "Você ganhou o Pote no Showdown! 🏆";
+                playerChips += pot;
             } else if (bScore > pScore) {
-                document.getElementById('status').innerText = "O Bot ganhou o Pote! 🏠";
+                document.getElementById('status').innerText = "O Bot ganhou o Pote no Showdown! 🏠";
+                botChips += pot;
             } else {
-                document.getElementById('status').innerText = "Empate! Pote dividido.";
-                chips += pot / 2;
+                document.getElementById('status').innerText = "Empate perfeito! Dividindo pote.";
+                playerChips += pot / 2;
+                botChips += pot / 2;
             }
-            endHand(true);
+            endHand();
         }
 
-        function endHand(showdownDone) {
+        function endHand() {
             pot = 0;
+            playerCurrentBet = 0;
+            botCurrentBet = 0;
+            currentBet = 0;
             updateUI();
             document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('slider-panel').style.display = 'none';
             document.getElementById('btn-start').style.display = 'block';
         }
     </script>
