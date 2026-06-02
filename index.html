@@ -222,19 +222,16 @@
     <div id="status" class="status-message">Clique em Iniciar para jogar Texas Hold'em</div>
 
     <div class="game-container">
-        <!-- Bot -->
         <div class="hand-section">
             <div class="label">Bot (Fichas: <span id="bot-chips">1000</span>) | Status: <span id="bot-status" style="color:var(--gold);">Aguardando</span></div>
             <div id="bot-cards" class="cards-container"></div>
         </div>
 
-        <!-- Mesa -->
         <div class="hand-section" style="background: rgba(0,0,0,0.15); padding: 8px 0; border-radius: 10px;">
             <div class="label">Mesa (Comunidade)</div>
             <div id="community-cards" class="cards-container"></div>
         </div>
 
-        <!-- Jogador -->
         <div class="hand-section">
             <div class="label">Suas Cartas (Apostado nesta rodada: <span id="player-invested">0</span>)</div>
             <div id="player-cards" class="cards-container"></div>
@@ -242,7 +239,6 @@
     </div>
 
     <div class="controls">
-        <!-- Controle Deslizante de Aumento -->
         <div class="raise-slider-container" id="slider-panel">
             <div class="slider-header">
                 <span>Valor do Aumento:</span>
@@ -255,7 +251,6 @@
             </div>
         </div>
 
-        <!-- Botões Principais de Ação -->
         <div class="btn-group" id="action-buttons" style="display: none;">
             <button id="btn-fold" onclick="fold()">Correr (Fold)</button>
             <button id="btn-call" onclick="callOrCheck()">Mesa / Pagar</button>
@@ -344,7 +339,8 @@
                 return;
             }
 
-            deck = shuffle(buildDeck());
+            deck = buildDeck();
+            deck = shuffle(deck);
             communityCards = [];
             currentStage = 0;
             
@@ -355,7 +351,7 @@
             
             playerCurrentBet = 10;
             botCurrentBet = 20;
-            currentBet = 20; // O preço para pagar é o Big Blind (20)
+            currentBet = 20; 
 
             playerHand = [deck.pop(), deck.pop()];
             botHand = [deck.pop(), deck.pop()];
@@ -384,7 +380,6 @@
 
         function toggleRaiseSlider(show) {
             if(show) {
-                // Configura o slider de acordo com as fichas do jogador
                 const minRaise = currentBet + 20; 
                 if(playerChips < (minRaise - playerCurrentBet)) {
                     alert("Você não tem fichas suficientes para aumentar!");
@@ -420,8 +415,6 @@
             updateUI();
             
             document.getElementById('status').innerText = `Você aumentou a aposta para ${raiseValue}!`;
-            
-            // Agora é a vez do Bot pensar se foge, paga ou aumenta
             setTimeout(botTurn, 1000);
         }
 
@@ -429,7 +422,6 @@
             let callAmountNeeded = currentBet - playerCurrentBet;
             
             if (callAmountNeeded > 0) {
-                // Pagando a aposta
                 if (playerChips < callAmountNeeded) {
                     alert("Você foi All-in!");
                     callAmountNeeded = playerChips;
@@ -452,13 +444,11 @@
             endHand();
         }
 
-        // --- INTELIGÊNCIA ARTIFICIAL DO BOT ---
         function botTurn() {
             let botScore = evaluateHandStrength(botHand, communityCards);
             let callAmountNeeded = currentBet - botCurrentBet;
 
             if (callAmountNeeded > 0) {
-                // Se o bot tem uma mão péssima e o jogador aumentou muito, o BOT CORRE (Fold)
                 if (botScore < 1.5 && callAmountNeeded > 40) {
                     document.getElementById('bot-status').innerText = "Correu (Fold)";
                     document.getElementById('status').innerText = "O Bot correu! Você ganhou o pote! 🎉";
@@ -468,21 +458,18 @@
                     return;
                 }
                 
-                // Se o bot tem uma mão razoável/boa, ele Paga (Call)
                 if (botChips >= callAmountNeeded) {
                     botChips -= callAmountNeeded;
                     pot += callAmountNeeded;
                     botCurrentBet += callAmountNeeded;
                     document.getElementById('bot-status').innerText = "Pagou";
                 } else {
-                    // All-in do bot
                     pot += botChips;
                     botCurrentBet += botChips;
                     botChips = 0;
                     document.getElementById('bot-status').innerText = "All-In";
                 }
             } else {
-                // Se ninguém apostou, ele dá Mesa (Check)
                 document.getElementById('bot-status').innerText = "Mesa (Check)";
             }
 
@@ -491,20 +478,19 @@
         }
 
         function nextStage() {
-            // Reseta as apostas da rodada atual para ir para o próximo estágio
             playerCurrentBet = 0;
             botCurrentBet = 0;
             currentBet = 0;
             
             currentStage++;
 
-            if (currentStage === 1) { // Flop
+            if (currentStage === 1) { 
                 communityCards.push(deck.pop(), deck.pop(), deck.pop());
                 document.getElementById('status').innerText = "Flop na mesa! O que vai fazer?";
-            } else if (currentStage === 2) { // Turn
+            } else if (currentStage === 2) { 
                 communityCards.push(deck.pop());
                 document.getElementById('status').innerText = "Turn na mesa!";
-            } else if (currentStage === 3) { // River
+            } else if (currentStage === 3) { 
                 communityCards.push(deck.pop());
                 document.getElementById('status').innerText = "River na mesa! Última chance de apostas.";
             } else if (currentStage === 4) {
@@ -517,11 +503,9 @@
             updateUI();
         }
 
-        // Sistema de avaliação de mãos - ATUALIZADO E CORRIGIDO
         function evaluateHandStrength(hand, community) {
             let allCards = [...hand, ...community];
             
-            // 1. Verificação de Sequência (Straight)
             let uniqueWeights = [...new Set(allCards.map(c => valueMap[c.value]))].sort((a, b) => b - a);
             let hasStraight = false;
             let straightHighCard = 0;
@@ -533,21 +517,17 @@
                     break;
                 }
             }
-            // Caso especial da menor sequência (A-2-3-4-5)
             if (!hasStraight && uniqueWeights.includes(14) && uniqueWeights.includes(2) && uniqueWeights.includes(3) && uniqueWeights.includes(4) && uniqueWeights.includes(5)) {
                 hasStraight = true;
                 straightHighCard = 5;
             }
 
             if (hasStraight) {
-                // Retorna peso 5 para Sequência + uma fração baseada na carta mais alta dela
                 return 5 + (straightHighCard / 15);
             }
 
-            // 2. Outras combinações baseadas em contagem (Originais do seu código)
             let counts = {};
             allCards.forEach(c => counts[c.value] = (counts[c.value] || 0) + 1);
-            
             let maxCount = Math.max(...Object.values(counts));
 
             if (maxCount === 4) return 7; 
@@ -557,13 +537,12 @@
                 return pairs >= 2 ? 3 : 2; 
             } 
             
-            // Carta Mais Alta pura
             let valuesInt = allCards.map(c => valueMap[c.value]);
             return Math.max(...valuesInt) / 15; 
         }
 
         function showdown() {
-            renderBoard(false); // Revela cartas escondidas do bot
+            renderBoard(false); 
             let pScore = evaluateHandStrength(playerHand, communityCards);
             let bScore = evaluateHandStrength(botHand, communityCards);
 
